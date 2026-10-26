@@ -247,7 +247,7 @@ aws-cloudformation-incident-management/
 
 ## Security
 
-I used GitHub OIDC authentication for the CloudFormation workflow. The Incident Management CI workflow only validates code and builds the frontend; it does not deploy to AWS. The application has no user authentication or authorization yet, so it is a learning demo only and must not be exposed to the public internet or used with real incident data. Before any public deployment, add authentication/authorization, HTTPS, restrictive security-group rules, and appropriate audit logging. Keep `backend/.env`, database passwords, and private keys out of Git.
+I used GitHub OIDC authentication for the CloudFormation workflow. The Incident Management app has a single administrator sign-in and protects incident API endpoints with server-side sessions. The CI workflow validates code and builds the frontend but does not deploy the app to AWS. This is still a learning demo, not a production-ready identity system: configure HTTPS, set `SESSION_COOKIE_SECURE=true`, restrict network access, and add operational controls before public use. Keep `backend/.env`, database passwords, and private keys out of Git. See `incident-management/docs/AUTHENTICATION.md` for setup and limitations.
 
 ## Summary
 
