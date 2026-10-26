@@ -57,14 +57,15 @@ function requireAuth(request, response, next) {
 
 function requireSameOrigin(request, response, next) {
   const origin = request.get('origin');
-  if (origin) {
-    try {
-      if (new URL(origin).host !== request.get('host')) {
-        return response.status(403).json({ message: 'Cross-origin request rejected.' });
-      }
-    } catch {
-      return response.status(403).json({ message: 'Invalid request origin.' });
+  if (!origin) {
+    return response.status(403).json({ message: 'Origin header required.' });
+  }
+  try {
+    if (new URL(origin).host !== request.get('host')) {
+      return response.status(403).json({ message: 'Cross-origin request rejected.' });
     }
+  } catch {
+    return response.status(403).json({ message: 'Invalid request origin.' });
   }
   return next();
 }
@@ -97,7 +98,7 @@ app.get('/api/auth/me', (request, response) => {
 app.post('/api/auth/login', loginLimiter, requireSameOrigin, async (request, response, next) => {
   try {
     const { username, password } = request.body ?? {};
-    const suppliedPassword = typeof password === 'string' ? password : '';
+    const suppliedPassword = typeof password === 'string' && password.length <= 1024 ? password : '';
     const actualHash = scryptSync(suppliedPassword, process.env.ADMIN_PASSWORD_SALT, 64);
     const expectedHash = Buffer.from(process.env.ADMIN_PASSWORD_HASH, 'hex');
     const passwordMatches =
