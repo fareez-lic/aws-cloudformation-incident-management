@@ -9,7 +9,10 @@
     "check": "node --check src/server.js && node --check src/db.js"
   },
   "dependencies": {
+    "connect-pg-simple": "10.0.0",
     "express": "4.21.2",
+    "express-rate-limit": "7.5.0",
+    "express-session": "1.18.1",
     "pg": "8.13.1"
   },
   "description": "Ubuntu 24.04 EC2 native incident management teaching lab (no Docker)",
