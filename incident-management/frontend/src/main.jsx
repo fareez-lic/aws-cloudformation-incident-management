@@ -2,16 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const emptyForm = {
-  title: '',
-  description: '',
-  severity: 'medium',
-};
+const emptyForm = { title: '', description: '', severity: 'medium' };
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
   const [incidents, setIncidents] = useState([]);
   const [form, setForm] = useState(emptyForm);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,6 +25,11 @@ function App() {
     try {
       setError('');
       const response = await fetch('/api/incidents');
+      if (response.status === 401) {
+        setUser(null);
+        setIncidents([]);
+        return;
+      }
       if (!response.ok) throw new Error('Could not load incidents');
       setIncidents(await response.json());
     } catch (loadError) {
@@ -34,24 +40,79 @@ function App() {
   }
 
   useEffect(() => {
-    loadIncidents();
+    let active = true;
+    fetch('/api/auth/me')
+      .then((response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then(async (payload) => {
+        if (!active) return;
+        setUser(payload?.user ?? null);
+        setAuthLoading(false);
+        if (payload?.user) {
+          setLoading(true);
+          await loadIncidents();
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setUser(null);
+          setAuthLoading(false);
+        }
+      });
+    return () => { active = false; };
   }, []);
+
+  async function signIn(event) {
+    event.preventDefault();
+    setLoginBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'Sign-in failed');
+      setUser(payload.user);
+      setPassword('');
+      setLoading(true);
+      await loadIncidents();
+    } catch (loginError) {
+      setError(loginError.message);
+    } finally {
+      setLoginBusy(false);
+    }
+  }
+
+  async function signOut() {
+    setError('');
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (!response.ok) throw new Error('Could not sign out. Please try again.');
+      setUser(null);
+      setIncidents([]);
+      setPassword('');
+    } catch (logoutError) {
+      setError(logoutError.message);
+    }
+  }
 
   async function createIncident(event) {
     event.preventDefault();
     setSaving(true);
     setError('');
-
     try {
       const response = await fetch('/api/incidents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-
+      if (response.status === 401) { setUser(null); throw new Error('Your session expired. Sign in again.'); }
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Could not create incident');
-
       setIncidents((current) => [payload, ...current]);
       setForm(emptyForm);
     } catch (saveError) {
@@ -63,34 +124,59 @@ function App() {
 
   async function changeStatus(id, status) {
     setError('');
-
     try {
       const response = await fetch(`/api/incidents/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
+      if (response.status === 401) { setUser(null); throw new Error('Your session expired. Sign in again.'); }
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || 'Could not update incident');
-
-      setIncidents((current) =>
-        current.map((incident) => (incident.id === id ? payload : incident)),
-      );
+      setIncidents((current) => current.map((incident) => incident.id === id ? payload : incident));
     } catch (statusError) {
       setError(statusError.message);
     }
   }
 
   async function deleteIncident(id) {
+    if (!window.confirm('Delete this incident? This cannot be undone.')) return;
     setError('');
-
     try {
       const response = await fetch(`/api/incidents/${id}`, { method: 'DELETE' });
+      if (response.status === 401) { setUser(null); throw new Error('Your session expired. Sign in again.'); }
       if (!response.ok) throw new Error('Could not delete incident');
       setIncidents((current) => current.filter((incident) => incident.id !== id));
     } catch (deleteError) {
       setError(deleteError.message);
     }
+  }
+
+  if (authLoading) {
+    return <main className="page-shell"><section className="panel auth-panel"><h1>Incident Command Center</h1><p>Checking sign-in…</p></section></main>;
+  }
+
+  if (!user) {
+    return (
+      <main className="page-shell auth-shell">
+        <section className="panel auth-panel">
+          <p className="eyebrow">Secure access</p>
+          <h1>Incident Command Center</h1>
+          <p>Sign in with your administrator account to manage incidents.</p>
+          {error && <div className="error-banner" role="alert">{error}</div>}
+          <form onSubmit={signIn}>
+            <label>Username
+              <input autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} />
+            </label>
+            <label>Password
+              <input autoComplete="current-password" type="password" required value={password} onChange={(event) => setPassword(event.target.value)} />
+            </label>
+            <button disabled={loginBusy}>{loginBusy ? 'Signing in…' : 'Sign in'}</button>
+          </form>
+          <p className="security-note">Use the one-time administrator credentials printed by the database setup script. Do not share them or commit them to Git.</p>
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -101,101 +187,49 @@ function App() {
           <h1>Incident Command Center</h1>
           <p>React frontend · Express API · PostgreSQL database</p>
         </div>
-        <div className="summary-card">
-          <strong>{openCount}</strong>
-          <span>active incidents</span>
+        <div className="user-card">
+          <span>Signed in as <strong>{user.username}</strong></span>
+          <button className="secondary" type="button" onClick={signOut}>Sign out</button>
         </div>
+        <div className="summary-card"><strong>{openCount}</strong><span>active incidents</span></div>
       </header>
 
-      {error && <div className="error-banner">{error}</div>}
+      {error && <div className="error-banner" role="alert">{error}</div>}
 
       <section className="grid">
         <form className="panel" onSubmit={createIncident}>
           <h2>Create incident</h2>
-
-          <label>
-            Title
-            <input
-              required
-              minLength="3"
-              value={form.title}
-              onChange={(event) => setForm({ ...form, title: event.target.value })}
-              placeholder="Example: Checkout API unavailable"
-            />
+          <label>Title
+            <input required minLength="3" maxLength="200" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Example: Checkout API unavailable" />
           </label>
-
-          <label>
-            Description
-            <textarea
-              rows="4"
-              value={form.description}
-              onChange={(event) =>
-                setForm({ ...form, description: event.target.value })
-              }
-              placeholder="Describe impact and current symptoms"
-            />
+          <label>Description
+            <textarea rows="4" maxLength="5000" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} placeholder="Describe impact and current symptoms" />
           </label>
-
-          <label>
-            Severity
-            <select
-              value={form.severity}
-              onChange={(event) =>
-                setForm({ ...form, severity: event.target.value })
-              }
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+          <label>Severity
+            <select value={form.severity} onChange={(event) => setForm({ ...form, severity: event.target.value })}>
+              <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
             </select>
           </label>
-
           <button disabled={saving}>{saving ? 'Creating…' : 'Create incident'}</button>
         </form>
 
         <section className="panel incidents-panel">
           <div className="panel-heading">
             <h2>Current incidents</h2>
-            <button className="secondary" type="button" onClick={loadIncidents}>
-              Refresh
-            </button>
+            <button className="secondary" type="button" onClick={() => { setLoading(true); loadIncidents(); }}>Refresh</button>
           </div>
-
-          {loading ? (
-            <p>Loading incidents…</p>
-          ) : incidents.length === 0 ? (
-            <p>No incidents found.</p>
-          ) : (
+          {loading ? <p>Loading incidents…</p> : incidents.length === 0 ? <p>No incidents found.</p> : (
             <div className="incident-list">
               {incidents.map((incident) => (
                 <article className="incident-card" key={incident.id}>
                   <div className="incident-title-row">
-                    <div>
-                      <span className={`badge ${incident.severity}`}>
-                        {incident.severity}
-                      </span>
-                      <h3>{incident.title}</h3>
-                    </div>
-                    <button
-                      className="danger-link"
-                      type="button"
-                      onClick={() => deleteIncident(incident.id)}
-                    >
-                      Delete
-                    </button>
+                    <div><span className={`badge ${incident.severity}`}>{incident.severity}</span><h3>{incident.title}</h3></div>
+                    <button className="danger-link" type="button" onClick={() => deleteIncident(incident.id)}>Delete</button>
                   </div>
                   <p>{incident.description || 'No description provided.'}</p>
                   <div className="incident-footer">
-                    <select
-                      value={incident.status}
-                      onChange={(event) =>
-                        changeStatus(incident.id, event.target.value)
-                      }
-                    >
-                      <option value="open">Open</option>
-                      <option value="investigating">Investigating</option>
-                      <option value="resolved">Resolved</option>
+                    <select aria-label={`Status for ${incident.title}`} value={incident.status} onChange={(event) => changeStatus(incident.id, event.target.value)}>
+                      <option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option>
                     </select>
                     <time>{new Date(incident.created_at).toLocaleString()}</time>
                   </div>
@@ -209,8 +243,4 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);
