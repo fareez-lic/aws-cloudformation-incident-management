@@ -102,7 +102,7 @@ The frontend uses React, the backend uses Node.js and Express, and PostgreSQL st
 
 I deployed the application directly on Ubuntu without Docker.
 
-The GitHub Actions workflow currently in this repository is for CloudFormation deployment. The file `incident-management/docs/GITHUB_ACTIONS.md` describes a separate application-deployment workflow as a follow-up exercise; that workflow is not yet configured in this repository.
+This repository has two separate GitHub Actions workflows: one deploys the CloudFormation infrastructure lab, and one runs CI checks for the Incident Management app (backend syntax validation and frontend production build). Automated deployment of the Incident Management app to EC2 is not configured; the file `incident-management/docs/GITHUB_ACTIONS.md` is a guide for that future exercise.
 
 ### Technologies
 
@@ -229,6 +229,7 @@ I practiced deploying a full-stack application on Linux, configuring PostgreSQL,
 ```text
 aws-cloudformation-incident-management/
 ├── .github/workflows/deploy.yml
+├── .github/workflows/incident-management-ci.yml
 ├── cloudformation.yaml
 ├── infrastructure/cloudformation-lab/cloudformation.yaml
 ├── screenshots/
@@ -244,9 +245,7 @@ aws-cloudformation-incident-management/
 
 ## Security
 
-I used GitHub OIDC authentication for the CloudFormation workflow. For the Incident Management application, I kept the backend and PostgreSQL database bound to localhost and restricted SSH access to my IP address.
-
-I did not include database passwords or private keys in this README.
+I used GitHub OIDC authentication for the CloudFormation workflow. The Incident Management CI workflow only validates code and builds the frontend; it does not deploy to AWS. The application has no user authentication or authorization yet, so it is a learning demo only and must not be exposed to the public internet or used with real incident data. Before any public deployment, add authentication/authorization, HTTPS, restrictive security-group rules, and appropriate audit logging. Keep `backend/.env`, database passwords, and private keys out of Git.
 
 ## Summary
 
