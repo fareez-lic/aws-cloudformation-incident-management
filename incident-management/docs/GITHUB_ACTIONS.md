@@ -1,8 +1,12 @@
-# Part C — Automate manual Ubuntu EC2 deployment with GitHub Actions
+# Optional Part C — Guide for a Future Application-Deployment Workflow
 
 ## Learning objective
 
-Students already deployed the application manually using `bash scripts/deploy-ubuntu.sh`. Now the **same deployment script** will run automatically after `git push` to `main`:
+This document explains how to configure a separate GitHub Actions workflow to deploy the Incident Management application to an existing Ubuntu EC2 instance.
+
+**That application-deployment workflow is not currently included in this repository.** The workflow currently present at `.github/workflows/deploy.yml` deploys the CloudFormation infrastructure lab, not the Incident Management application.
+
+The following diagram describes the intended workflow after you configure it:
 
 ```text
 Git push main → GitHub Actions checkout → install + validate → build UI
@@ -122,9 +126,9 @@ Use a *disposable* demo EC2 instance and remove its SSH rule after the homework.
 
 ## C6. Run your first CI/CD pipeline
 
-The provided workflow (`.github/workflows/deploy.yml`) automatically runs on **push to main** or via **Actions → Deploy native incident app → Run workflow**.
+After you create a separate application-deployment workflow based on this guide, configure it to run on **push to main** or via a manual workflow trigger. The existing `.github/workflows/deploy.yml` is the CloudFormation workflow and does not deploy this application.
 
-Jobs:
+The proposed application workflow would have these jobs:
 
 - `build`: Node 24, npm dependency install, syntax checks and React production build.
 - `deploy`: only runs if the `build` job passed **and** the configured EC2 vars/secrets exist. It copies code using rsync while excluding `.env`, `node_modules`, `.git`, and `dist`, then runs `scripts/deploy-ubuntu.sh` on EC2.

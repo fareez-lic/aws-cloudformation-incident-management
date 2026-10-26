@@ -102,6 +102,8 @@ The frontend uses React, the backend uses Node.js and Express, and PostgreSQL st
 
 I deployed the application directly on Ubuntu without Docker.
 
+The GitHub Actions workflow currently in this repository is for CloudFormation deployment. The file `incident-management/docs/GITHUB_ACTIONS.md` describes a separate application-deployment workflow as a follow-up exercise; that workflow is not yet configured in this repository.
+
 ### Technologies
 
 - AWS EC2
