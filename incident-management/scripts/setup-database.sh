@@ -31,6 +31,29 @@ EOF
   chmod 600 "$DB_FILE"
   echo 'Created backend/.env with a random password (file is ignored by Git).'
 fi
+# Create authentication secrets once; preserve them on repeat runs.
+if [[ -z "${ADMIN_USERNAME:-}" || -z "${ADMIN_PASSWORD_SALT:-}" || -z "${ADMIN_PASSWORD_HASH:-}" || -z "${SESSION_SECRET:-}" ]]; then
+  NEW_ADMIN_PASSWORD="$(openssl rand -hex 16)"
+  ADMIN_USERNAME='admin'
+  ADMIN_PASSWORD_SALT="$(openssl rand -hex 16)"
+  ADMIN_PASSWORD_HASH="$(node --input-type=module -e 'import { scryptSync } from "node:crypto"; console.log(scryptSync(process.argv[1], process.argv[2], 64).toString("hex"))' "$NEW_ADMIN_PASSWORD" "$ADMIN_PASSWORD_SALT")"
+  SESSION_SECRET="$(openssl rand -hex 32)"
+  cat >> "$DB_FILE" <<EOF
+ADMIN_USERNAME=$ADMIN_USERNAME
+ADMIN_PASSWORD_SALT=$ADMIN_PASSWORD_SALT
+ADMIN_PASSWORD_HASH=$ADMIN_PASSWORD_HASH
+SESSION_SECRET=$SESSION_SECRET
+SESSION_COOKIE_SECURE=false
+EOF
+  chmod 600 "$DB_FILE"
+  echo
+  echo 'Created the application administrator. Save this password in a password manager:'
+  printf 'Username: %s\nPassword: %s\n' "$ADMIN_USERNAME" "$NEW_ADMIN_PASSWORD"
+  echo 'This password will not be displayed again. Set SESSION_COOKIE_SECURE=true after HTTPS is configured.'
+else
+  echo 'Existing application authentication credentials found; preserving them.'
+fi
+
 # -v variables are quoted and safely escaped by psql format(%I, %L).
 admin_psql=(sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d postgres)
 "${admin_psql[@]}" -v "dbuser=$DB_USER" -v "dbpass=$DB_PASSWORD" -v "dbname=$DB_NAME" <<'SQL'

@@ -104,6 +104,8 @@ I deployed the application directly on Ubuntu without Docker.
 
 This repository has two separate GitHub Actions workflows: one deploys the CloudFormation infrastructure lab, and one runs CI checks for the Incident Management app (backend syntax validation and frontend production build). Automated deployment of the Incident Management app to EC2 is not configured; the file `incident-management/docs/GITHUB_ACTIONS.md` is a guide for that future exercise.
 
+The Incident Management app now has a single administrator sign-in and protects incident API endpoints with server-side sessions. See `incident-management/docs/AUTHENTICATION.md` for setup instructions and security limitations. Configure HTTPS and set `SESSION_COOKIE_SECURE=true` before any public deployment.
+
 ### Technologies
 
 - AWS EC2
@@ -245,7 +247,7 @@ aws-cloudformation-incident-management/
 
 ## Security
 
-I used GitHub OIDC authentication for the CloudFormation workflow. The Incident Management CI workflow only validates code and builds the frontend; it does not deploy to AWS. The application has no user authentication or authorization yet, so it is a learning demo only and must not be exposed to the public internet or used with real incident data. Before any public deployment, add authentication/authorization, HTTPS, restrictive security-group rules, and appropriate audit logging. Keep `backend/.env`, database passwords, and private keys out of Git.
+I used GitHub OIDC authentication for the CloudFormation workflow. The Incident Management app has a single administrator sign-in and protects incident API endpoints with server-side sessions. The CI workflow validates code and builds the frontend but does not deploy the app to AWS. This is still a learning demo, not a production-ready identity system: configure HTTPS, set `SESSION_COOKIE_SECURE=true`, restrict network access, and add operational controls before public use. Keep `backend/.env`, database passwords, and private keys out of Git. See `incident-management/docs/AUTHENTICATION.md` for setup and limitations.
 
 ## Summary
 
