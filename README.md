@@ -104,6 +104,8 @@ I deployed the application directly on Ubuntu without Docker.
 
 This repository has two separate GitHub Actions workflows: one deploys the CloudFormation infrastructure lab, and one runs CI checks for the Incident Management app (backend syntax validation and frontend production build). Automated deployment of the Incident Management app to EC2 is not configured; the file `incident-management/docs/GITHUB_ACTIONS.md` is a guide for that future exercise.
 
+The Incident Management app now has a single administrator sign-in and protects incident API endpoints with server-side sessions. See `incident-management/docs/AUTHENTICATION.md` for setup instructions and security limitations. Configure HTTPS and set `SESSION_COOKIE_SECURE=true` before any public deployment.
+
 ### Technologies
 
 - AWS EC2
