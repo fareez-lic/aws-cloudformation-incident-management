@@ -108,6 +108,8 @@ Resources:
           Value: !Ref Environment
         - Key: Course
           Value: bongoDev-DevOps
+        - Key: DeploymentStage
+          Value: portfolio-verified
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
