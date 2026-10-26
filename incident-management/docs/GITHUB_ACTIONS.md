@@ -18,30 +18,18 @@ This workflow deploys **application code** to an existing EC2 instance. It does 
 
 ## Before you start
 
-- Part B manual EC2 deployment must work first.
-- GitHub repo contains `.github/workflows/deploy.yml`, but **never** commits `backend/.env` or SSH private keys.
+- The manual EC2 deployment must work first.
+- The repository has a CloudFormation deployment workflow at `.github/workflows/deploy.yml` and an application CI workflow at `.github/workflows/incident-management-ci.yml`. The CI workflow checks backend syntax and builds the frontend; it does **not** deploy the application.
+- Never commit `incident-management/backend/.env` or SSH private keys.
 - Default branch: `main`.
 - Target AWS Ubuntu EC2 has outbound Internet access, Node, PostgreSQL, Nginx and app DB configured.
 - The remote directory is `/home/ubuntu/incident-management-ubuntu-ec2` and remote user is `ubuntu` (the defaults of this example).
 - Network path from GitHub runner to TCP **22** on EC2 must be available. **Important:** GitHub-hosted runner public IP ranges can change and whitelisting them all is discouraged. For a controlled class use a runner with a known fixed egress IP or a trusted self-hosted runner; allow SSH only from that egress IP. Do not leave TCP 22 open to the Internet. Production alternatives include AWS SSM/CodeDeploy or OIDC-authenticated deployments.
 - The default Ubuntu EC2 `ubuntu` user is sudo-capable without a password; the deployment script requires sudo for installing Nginx config + systemd. This is **classroom only**. In a real system use a dedicated, least-privilege deploy account with narrowly scoped permissions.
 
-## C1. Create a GitHub repository
+## C1. Prepare this repository
 
-1. GitHub → **New repository**, e.g., `bongodev-incident-native`. Private is a reasonable default.
-2. In your local terminal, in this extracted Ubuntu-only project directory on your computer:
-
-```bash
-git init
-git branch -M main
-git add .
-git status                   # Confirm backend/.env is NOT in staging
-git commit -m 'Initial native incident management lab'
-git remote add origin git@github.com:YOUR_USER/bongodev-incident-native.git
-git push -u origin main
-```
-
-If using HTTPS, change the origin URL to `https://github.com/YOUR_USER/bongodev-incident-native.git` and authenticate appropriately. Never put passwords/tokens directly in a remote URL.
+This project already lives in `fareez-lic/aws-cloudformation-incident-management`; you do not need to create a second repository for this guide. If you adapt the exercise for a separate repository, create that repository first and review `git status` to ensure that `backend/.env` and private keys are not staged. Never put passwords or tokens directly in a remote URL.
 
 ## C2. Create a dedicated SSH deployment key
 
@@ -137,7 +125,7 @@ You can run CI alone before adding EC2 secrets: the deploy job is skipped safely
 
 ## C7. Trigger an observable update
 
-In `frontend/src/main.jsx` on your own computer, change:
+In `incident-management/frontend/src/main.jsx` on your own computer, change:
 
 ```jsx
 <h1>Incident Command Center</h1>
@@ -152,14 +140,14 @@ To:
 Then:
 
 ```bash
-git add frontend/src/main.jsx
-git commit -m 'Update dashboard heading through CI/CD'
+git add incident-management/frontend/src/main.jsx
+git commit -m 'Update incident dashboard heading'
 git push origin main
 ```
 
-GitHub → Actions → inspect run, watch deploy job. Refresh `http://EC2_PUBLIC_IP` with a hard reload. **The backend stays on port 5000**; Nginx continues to serve port 80.
+The current application CI workflow checks backend syntax and builds the frontend. It does not deploy to EC2. To test a deployment, use a disposable EC2 instance and follow the manual deployment instructions until a separate, secured deployment workflow is implemented. **The backend should stay bound to localhost on port 5000**; Nginx serves port 80 in this lab.
 
-For a second demo, modify only the README; Actions still deploy, showing why pipelines can later add path filters.
+Changes to the README alone do not trigger the application CI workflow because it uses path filters.
 
 ## C8. Diagnose a failed deployment
 
@@ -184,4 +172,4 @@ curl -f http://127.0.0.1/health
 
 ## C9. Student homework submission
 
-Provide repo URL, Actions run URL (successful deploy), screenshot of EC2 web app after `main.jsx` heading change, and 4–6 sentences explaining how Actions connects and updates the server. Remove GitHub secrets/deploy key and terminate EC2 after class.
+Provide the repository URL, a successful application CI run URL, screenshots of the manually deployed EC2 web app, and 4–6 sentences explaining what CI validates and what a future deployment workflow would do. Do not describe a CI run as a successful application deployment. Remove temporary GitHub secrets/deployment keys and terminate the disposable EC2 instance after class.

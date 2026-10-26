@@ -22,7 +22,7 @@ app.get('/health', async (_request, response) => {
       service: 'incident-backend',
       status: 'unhealthy',
       database: 'disconnected',
-      message: error.message,
+      message: 'Database unavailable',
     });
   }
 });

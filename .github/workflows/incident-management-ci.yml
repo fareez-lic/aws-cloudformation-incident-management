@@ -1,0 +1,71 @@
+name: Incident Management CI
+
+on:
+  push:
+    branches:
+      - main
+      - fix/repository-ci-security-docs
+    paths:
+      - "incident-management/backend/**"
+      - "incident-management/frontend/**"
+      - ".github/workflows/incident-management-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "incident-management/backend/**"
+      - "incident-management/frontend/**"
+      - ".github/workflows/incident-management-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: incident-management-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-check:
+    name: Backend syntax check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: incident-management/backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install backend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Check backend JavaScript syntax
+        run: npm run check
+
+  frontend-build:
+    name: Frontend production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: incident-management/frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build React frontend
+        run: npm run build
