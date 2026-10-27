@@ -306,7 +306,7 @@ Screenshots 18–24 provide the deployment and cleanup evidence. Open any image 
 ![EC2 instance running](incident-management/screenshots/18-incident-ec2-running.png)
 
 **SSH connection to Ubuntu**
-![SSH connection](incident-management/screenshots/19-incident-ssh-connected.png)
+![SSH connection](incident-management/screenshots/19-incident-ec2-ssh-connected.png)
 
 **Nginx verified**
 ![Nginx verification](incident-management/screenshots/20-incident-nginx-verified.png)
