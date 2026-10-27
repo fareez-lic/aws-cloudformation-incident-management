@@ -57,17 +57,31 @@ function requireAuth(request, response, next) {
 
 function requireSameOrigin(request, response, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return next();
+
   const origin = request.get('origin');
   if (!origin) {
     return response.status(403).json({ message: 'Origin header required.' });
   }
+
   try {
-    if (new URL(origin).host !== request.get('host')) {
-      return response.status(403).json({ message: 'Cross-origin request rejected.' });
+    const parsedOrigin = new URL(origin);
+    const sameOrigin = parsedOrigin.host === request.get('host');
+    const localDevOrigin =
+      process.env.NODE_ENV !== 'production' &&
+      ['http://localhost:5173', 'http://127.0.0.1:5173']
+        .includes(parsedOrigin.origin);
+
+    if (!sameOrigin && !localDevOrigin) {
+      return response.status(403).json({
+        message: 'Cross-origin request rejected.',
+      });
     }
   } catch {
-    return response.status(403).json({ message: 'Invalid request origin.' });
+    return response.status(403).json({
+      message: 'Invalid request origin.',
+    });
   }
+
   return next();
 }
 
