@@ -274,3 +274,28 @@ I used GitHub OIDC authentication for the CloudFormation workflow. The Incident 
 ## Summary
 
 The CloudFormation project helped me practice infrastructure creation and automated deployment. The Incident Management project helped me practice Linux administration, application deployment, service configuration, troubleshooting, verification, and AWS cleanup.
+
+## Problems I Faced and What I Learned
+
+### Problems I Faced
+
+- EC2 did not launch initially because I used an incorrect SSH key pair name.
+- I had to troubleshoot EC2, networking, and security group configuration.
+- Nginx worked, but deploying the complete application required additional setup.
+- I configured Node.js, PostgreSQL, and the backend service on Ubuntu.
+- My verification script initially checked the wrong port.
+- The incidents API returned HTTP 401 because authentication was required. I updated the verification script to handle this correctly.
+
+### What I Learned
+
+- How to launch an EC2 instance and connect using SSH.
+- How to configure security groups for SSH and HTTP access.
+- How Nginx serves a frontend and acts as a reverse proxy.
+- How to configure PostgreSQL and connect it to a Node.js backend.
+- How to manage backend services using systemd.
+- How to verify application health using curl and Bash scripts.
+- How to troubleshoot deployment issues and document the results.
+
+### Deployment Evidence
+
+Screenshots 18–23 document the EC2 instance, SSH connection, Nginx verification, public website access, successful deployment, and final verification.
