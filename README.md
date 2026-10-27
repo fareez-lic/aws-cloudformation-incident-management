@@ -86,6 +86,28 @@ Web Browser
 
 ![CloudFormation update](screenshots/11-cloudformation-update-complete.png)
 
+### Extra Credit Questions
+
+**1. Why is PostgreSQL not exposed on public port 5432?**
+
+PostgreSQL listens on `127.0.0.1:5432`, so only programs on the same server can connect directly. The browser talks to the application through Nginx and the Express API; the database is not directly reachable from the internet. This reduces the attack surface and prevents external clients from bypassing the application's authentication and validation.
+
+**2. What is the difference between an Ubuntu service (`systemd`) and an Nginx reverse proxy?**
+
+`systemd` manages background services: it can start the Node.js backend at boot, stop or restart it, and report its status. Nginx accepts HTTP requests and routes them to the appropriate destination—for example, serving the built React files and forwarding `/api` requests to the backend. They do different jobs and can work together.
+
+**3. Why do we build React using `npm run build` before deploying it?**
+
+The build step converts the React source code into optimized static HTML, CSS, and JavaScript files that a web server such as Nginx can serve. The build process also catches many compile-time errors and produces the deployable files in the `dist/` directory.
+
+**4. Why does changing React code require a build/redeploy, but creating an incident does not?**
+
+Changing React source code changes the application's frontend files, so the production bundle must be rebuilt and the updated files deployed. Creating an incident changes application data stored in PostgreSQL through the backend API. It does not change the frontend source code, so no frontend rebuild is needed.
+
+**5. Which actions could GitHub Actions perform automatically after `git push`?**
+
+Depending on the workflow triggers and permissions, GitHub Actions can run backend checks, build the React frontend, run tests, scan dependencies, package artifacts, and deploy infrastructure or an application. In this repository, the Incident Management CI workflow checks backend syntax and builds the frontend, while the CloudFormation workflow automates the infrastructure deployment. **The Incident Management application's deployment to EC2 is not currently automated by its CI workflow.**
+
 ### What I Learned
 
 I practiced Infrastructure as Code, environment-based deployments, GitHub Actions workflows, OIDC authentication, CloudFormation updates, and AWS resource cleanup.
