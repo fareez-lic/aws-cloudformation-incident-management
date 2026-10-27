@@ -299,3 +299,26 @@ The CloudFormation project helped me practice infrastructure creation and automa
 ### Deployment Evidence
 
 Screenshots 18–23 document the EC2 instance, SSH connection, Nginx verification, public website access, successful deployment, and final verification.
+
+Screenshots 18–24 provide the deployment and cleanup evidence. Open any image to view it at full size.
+
+**EC2 instance running**
+![EC2 instance running](incident-management/screenshots/18-incident-ec2-running.png)
+
+**SSH connection to Ubuntu**
+![SSH connection](incident-management/screenshots/19-incident-ssh-connected.png)
+
+**Nginx verified**
+![Nginx verification](incident-management/screenshots/20-incident-nginx-verified.png)
+
+**Application accessible over public HTTP**
+![Public HTTP access](incident-management/screenshots/21-incident-nginx-public-access.png)
+
+**Deployment completed**
+![Deployment success](incident-management/screenshots/22-incident-deployment-success.png)
+
+**Final application verification**
+![Final verification](incident-management/screenshots/23-incident-final-verification.png)
+
+**EC2 termination evidence**
+![EC2 terminated](incident-management/screenshots/24-incident-ec2-terminated.png)
